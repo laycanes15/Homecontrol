@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#1565C0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="GestorHogar"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<title>Gestor del Hogar — Valledupar</title>
+<style>
+:root{
+  --p:#1565C0;--p2:#1976D2;--p3:#42A5F5;--p4:#0D47A1;
+  --bg:#0A0E1A;--bg2:#111827;--bg3:#1C2333;--card:#131929;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#E8ECF4;--muted:#7B8BA0;
+  --green:#22C55E;--red:#EF4444;--amber:#F59E0B;
+  --purple:#8B5CF6;--teal:#14B8A6;--pink:#EC4899;--orange:#F97316;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+  --drawer:268px;--radius:12px;--radius-sm:8px;
+  --accent:#42A5F5;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+/* ═══════════════════════════════════════════
+   LAYOUT — estructura que NO fuga en Android
+   Clave: usar position:fixed en #app y
+   min-height:0 en todos los hijos flex
+═══════════════════════════════════════════ */
+html{height:100%;overflow:hidden}
+body{
+  height:100%;
+  overflow:hidden;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Segoe UI",system-ui,sans-serif;
+  font-size:14px;
+}
+#app{
+  /* Anclar al viewport completo */
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  display:flex;
+  flex-direction:row;
+  overflow:hidden;
+  padding-top:var(--safe-top);
+}
+
+/* ─── SIDEBAR ─── */
+#sidebar{
+  width:var(--drawer);
+  background:var(--bg2);
+  display:flex;
+  flex-direction:column;
+  flex-shrink:0;
+  overflow:hidden;
+  border-right:1px solid var(--border);
+  transition:transform .25s ease;
+  z-index:300;
+}
+.sidebar-header{
+  background:linear-gradient(160deg,var(--p4) 0%,var(--p2) 100%);
+  padding:20px 16px 16px;
+  flex-shrink:0;
+}
+.sidebar-logo{font-size:32px;margin-bottom:6px}
+.sidebar-app-name{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.3px}
+.sidebar-city{font-size:11px;color:rgba(255,255,255,.65);margin-top:2px}
+.sidebar-mes-row{display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.sidebar-mes-sel{
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
+  color:#fff;border-radius:20px;padding:4px 10px;font-size:11px;
+  font-weight:600;cursor:pointer;-webkit-appearance:none;flex:1;min-width:0;
+}
+.sidebar-mes-sel option{background:var(--bg3);color:var(--text)}
+.sidebar-save-btn{
+  background:var(--green);color:#fff;border:none;border-radius:20px;
+  padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;
+  flex-shrink:0;white-space:nowrap;
+}
+.sidebar-nav{
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:8px 0;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.sidebar-nav::-webkit-scrollbar{display:none}
+.nav-group{padding:10px 14px 3px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700}
+.nav-btn{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 14px;cursor:pointer;
+  border:none;background:none;width:100%;text-align:left;
+  color:var(--muted);border-left:3px solid transparent;
+  transition:all .18s;
+}
+.nav-btn:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.nav-btn.active{background:rgba(21,101,192,.18);border-left-color:var(--p3);color:#fff}
+.nav-ico{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;background:rgba(255,255,255,.06);
+  transition:background .18s;
+}
+.nav-btn.active .nav-ico{background:rgba(21,101,192,.35)}
+.nav-label{font-size:13px;font-weight:500;flex:1}
+.sidebar-footer{
+  padding:10px 14px;border-top:1px solid var(--border);
+  font-size:10px;color:var(--muted);text-align:center;flex-shrink:0;
+}
+
+/* ─── MAIN AREA ─── */
+.main-area{
+  flex:1;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+/* ─── TOPBAR (solo móvil) ─── */
+#topbar{
+  display:none;
+  height:56px;
+  background:var(--p4);
+  align-items:center;
+  gap:10px;
+  padding:0 14px;
+  flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,0,0,.4);
+  z-index:50;
+}
+.menu-btn{
+  width:40px;height:40px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.1);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;font-size:20px;
+  position:relative;z-index:400;
+}
+#topbar-title{
+  flex:1;font-size:15px;font-weight:700;color:#fff;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#topbar-save{flex-shrink:0;
+  background:var(--green);color:#fff;border:none;
+  border-radius:20px;padding:6px 12px;font-size:12px;
+  font-weight:700;cursor:pointer;
+}
+
+/* ─── DESKTOP TOPBAR ─── */
+.desktop-top{
+  height:52px;background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;
+  gap:12px;flex-shrink:0;
+}
+.desktop-top-title{font-size:16px;font-weight:700;flex:1}
+
+/* ─── CONTENT — scroll aquí, nunca en body ─── */
+.content{
+  flex:1;
+  min-height:0;       /* CRÍTICO: permite que flex encoja */
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  padding:14px 14px calc(20px + var(--safe-bot));
+}
+
+/* ─── MOBILE ─── */
+@media(max-width:767px){
+  #sidebar{
+    position:fixed;
+    top:0;left:0;bottom:0;
+    transform:translateX(calc(-1 * var(--drawer)));
+    z-index:300;
+  }
+  #sidebar.open{
+    transform:translateX(0);
+  }
+  #topbar{display:flex}
+  .desktop-top{display:none}
+  .content{padding-top:14px}
+}
+
+/* ─── OVERLAY (mobile) ─── */
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:290;pointer-events:none;transition:background .3s}
+#overlay.open{background:rgba(0,0,0,.65);pointer-events:all}
+
+/* ─── MAIN AREA ─── */
+.main-area{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+
+/* ─── DESKTOP TOPBAR ─── */
+.desktop-top{
+  height:52px;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;
+}
+.desktop-top-title{font-size:16px;font-weight:700;flex:1}
+
+/* ─── CONTENT ─── */
+.content{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:14px 14px calc(16px + var(--safe-bot));-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+
+/* ─── MOBILE ADAPTATIONS ─── */
+@media(max-width:767px){
+  #sidebar{
+    position:fixed;top:0;left:calc(-1 * var(--drawer));bottom:0;
+    transform:none;padding-top:var(--safe-top);
+  }
+  #sidebar.open{transform:translateX(var(--drawer))}
+  #topbar{display:flex}
+  .desktop-top{display:none}
+  .content{padding-top:calc(56px + 14px + var(--safe-top))}
+}
+
+/* ─── SECTIONS ─── */
+.sec{display:none}.sec.active{display:block}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.sh-left{display:flex;align-items:center;gap:10px}
+.sh-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.sh-title{font-size:17px;font-weight:700}
+.sh-sub{font-size:11px;color:var(--muted)}
+.ebs{display:flex;gap:6px;flex-wrap:wrap}
+.btn-e{padding:6px 13px;border-radius:20px;border:none;cursor:pointer;font-size:11px;font-weight:600}
+.bp{background:#DC2626;color:#fff}.be{background:#166534;color:#fff}.bw{background:#16A34A;color:#fff}
+
+/* ─── CARDS ─── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.card-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px}
+
+/* ─── SUMMARY ─── */
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.sum-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px;position:relative;overflow:hidden}
+.sum-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+.sc-ing::before{background:var(--green)}.sc-gas::before{background:var(--red)}
+.sc-bal::before{background:var(--p3)}.sc-reg::before{background:var(--purple)}
+.sum-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.sum-val{font-size:19px;font-weight:700}
+
+/* ─── QUINCENAS ─── */
+.quinc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.qcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px;border-left:3px solid var(--p3)}
+.qcard.q2{border-left-color:var(--teal)}
+.qh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.qt{font-size:12px;font-weight:700}
+.qlk{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600}
+.lo{background:rgba(34,197,94,.15);color:var(--green)}.lc{background:rgba(239,68,68,.15);color:var(--red)}
+.qrow{display:flex;gap:6px;margin-bottom:7px}
+.qrow input{flex:1;min-width:0}
+.qbtn{background:var(--p2);color:#fff;border:none;border-radius:var(--radius-sm);padding:8px 11px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.qbtn:disabled{opacity:.3}
+.qtot{font-size:11px;color:var(--muted)}.qtot b{color:var(--green)}
+.desc-box{background:var(--bg3);border-radius:var(--radius-sm);padding:9px;margin-top:7px;font-size:12px}
+.desc-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)}
+.desc-row:last-child{border-bottom:none;font-weight:700;color:var(--green);padding-top:4px}
+
+/* ─── MONTO TOTAL ─── */
+.mt-card{background:linear-gradient(135deg,var(--p4),#0D3B8C);border:1px solid rgba(66,165,245,.3);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+.mt-label{font-size:12px;font-weight:700;color:rgba(255,255,255,.8);margin-bottom:8px}
+.mt-row{display:flex;gap:8px;margin-bottom:7px}
+.mt-row input{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:var(--radius-sm);padding:10px 12px;font-size:14px;font-weight:700}
+.mt-row input::placeholder{color:rgba(255,255,255,.5)}
+.mt-btn{background:#fff;color:var(--p4);border:none;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.mt-prev{background:rgba(0,0,0,.2);border-radius:var(--radius-sm);padding:10px;font-size:12px}
+.mt-pr{display:flex;justify-content:space-between;padding:2px 0;color:rgba(255,255,255,.8)}
+.mt-pr.tot{font-weight:700;color:#fff;border-top:1px solid rgba(255,255,255,.2);margin-top:4px;padding-top:5px}
+
+/* ─── FORMS ─── */
+.fg{display:grid;gap:8px;margin-bottom:12px}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.fg input,.fg select,.fg textarea,.qrow input{
+  background:var(--bg3);border:1px solid var(--border2);color:var(--text);
+  border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;width:100%;
+  -webkit-appearance:none;font-family:inherit;transition:border-color .2s;
+}
+.fg input:focus,.fg select:focus,.qrow input:focus{outline:none;border-color:var(--p3)}
+.fg textarea{resize:none;min-height:48px}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+.badd{
+  background:linear-gradient(90deg,var(--p2),var(--p3));
+  color:#fff;padding:12px;border-radius:var(--radius-sm);
+  border:none;cursor:pointer;font-size:14px;font-weight:700;
+  width:100%;box-shadow:0 4px 12px rgba(21,101,192,.35);
+  transition:transform .15s;
+}
+.badd:active{transform:scale(.98)}
+.badd.g{background:linear-gradient(90deg,#16A34A,#22C55E);box-shadow:0 4px 12px rgba(34,197,94,.3)}
+.badd.pu{background:linear-gradient(90deg,var(--purple),#A78BFA);box-shadow:0 4px 12px rgba(139,92,246,.3)}
+.badd.am{background:linear-gradient(90deg,#D97706,#F59E0B);color:#000}
+
+/* ─── TABLES ─── */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius-sm)}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:320px}
+th{background:var(--bg3);color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.bdel{background:rgba(239,68,68,.12);color:var(--red);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.bg2{background:rgba(34,197,94,.12);color:var(--green)}.br2{background:rgba(239,68,68,.12);color:var(--red)}
+.ba{background:rgba(245,158,11,.12);color:var(--amber)}.bb{background:rgba(21,101,192,.2);color:var(--p3)}
+.nc{font-size:10px;color:var(--muted);font-style:italic}
+.fc{font-size:11px;color:var(--p3);font-weight:500}
+.tot-row{text-align:right;margin-top:8px;font-size:13px;font-weight:700}
+
+/* ─── GROUPS ─── */
+.sub{margin-bottom:13px}
+.subt{font-size:12px;font-weight:700;color:var(--p3);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.pb{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:3px}
+.pf{height:100%;border-radius:3px;transition:width .4s}
+
+/* ─── CHART ─── */
+.cw{background:var(--bg3);border-radius:var(--radius);padding:12px;margin-top:12px}
+.ct{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:9px}
+.cr{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.cl{font-size:10px;min-width:88px;color:var(--text);text-align:right;flex-shrink:0}
+.cb{flex:1;background:var(--bg2);border-radius:4px;height:14px;overflow:hidden}
+.cf{height:100%;border-radius:4px;transition:width .4s}
+.cv{font-size:10px;color:var(--muted);min-width:55px}
+
+/* ─── SCANNER ─── */
+.scanbox{background:var(--bg3);border:2px dashed var(--border2);border-radius:var(--radius);padding:18px;text-align:center;margin-bottom:12px;cursor:pointer;transition:border-color .2s}
+.scanbox:active{border-color:var(--p3);background:rgba(21,101,192,.08)}
+.scan-ico{font-size:30px;margin-bottom:5px}
+.scan-lbl{font-size:12px;color:var(--muted)}
+.scan-result{display:none;background:var(--bg3);border-radius:var(--radius-sm);padding:11px;margin-bottom:11px;font-size:12px}
+
+
+/* ─── TIENDA TABS ─── */
+.tienda-tab{
+  display:flex;align-items:center;gap:5px;
+  padding:7px 12px;border-radius:20px;
+  border:1px solid var(--border2);background:var(--bg3);
+  color:var(--muted);font-size:12px;font-weight:500;
+  cursor:pointer;transition:all .18s;white-space:nowrap;
+}
+.tienda-tab span{font-size:16px}
+.tienda-tab:hover{border-color:var(--p3);color:var(--text)}
+.tienda-tab.active{
+  background:linear-gradient(90deg,var(--p4),var(--p2));
+  border-color:var(--p3);color:#fff;font-weight:700;
+  box-shadow:0 2px 10px rgba(21,101,192,.4);
+}
+
+/* ─── CHIPS ─── */
+.chip-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{padding:6px 13px;border-radius:20px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
+.chip.active{background:var(--p2);color:#fff;border-color:var(--p2)}
+
+/* ─── TARJETAS / DEUDAS / ENSERES ─── */
+.tcrd{background:var(--card);border-radius:var(--radius);padding:13px;margin-bottom:9px;border-left:3px solid var(--p3)}
+.tcrdh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px}
+.dcrd{background:var(--card);border-radius:var(--radius);padding:13px;margin-bottom:9px;border-left:3px solid var(--red)}
+.mv-badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600}
+.mvc{background:rgba(21,101,192,.2);color:var(--p3)}.mvm{background:rgba(245,158,11,.15);color:var(--amber)}
+.enser-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:12px}
+.enser-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 6px;text-align:center}
+.enser-item.prestado{border-color:var(--amber);background:rgba(245,158,11,.08)}
+.enser-item.disponible{border-color:var(--green);background:rgba(34,197,94,.06)}
+.enser-ico{font-size:22px;margin-bottom:4px}
+.enser-nom{font-size:11px;font-weight:600}
+.enser-estado{font-size:9px;margin-top:2px;font-weight:600}
+.tienda-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:12px}
+.tienda-btn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 8px;text-align:center;cursor:pointer;transition:all .2s;color:var(--text);font-size:12px}
+.tienda-btn:hover{border-color:var(--p3)}.tienda-btn.sel{border-color:var(--p3);background:rgba(21,101,192,.18);color:var(--p3);font-weight:700}
+.tienda-ico{font-size:22px;margin-bottom:4px}
+.fna-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:11px}
+.fna-cal-day{border-radius:5px;padding:4px 2px}
+
+/* ─── TOAST / INSTALL ─── */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border2);color:var(--text);padding:9px 18px;border-radius:24px;font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+#toast.show{opacity:1}
+#install-banner{display:none;position:fixed;top:0;left:0;right:0;background:var(--p4);color:#fff;padding:11px 14px;z-index:200;align-items:center;justify-content:space-between;font-size:13px;padding-top:calc(11px + var(--safe-top))}
+#install-banner.show{display:flex}
+.inst-btn{background:#fff;color:var(--p4);border:none;border-radius:20px;padding:5px 12px;font-weight:700;cursor:pointer;font-size:12px}
+</style>
+</head>
+<body>
+<div id="install-banner" style="display:none;position:fixed;top:0;left:0;right:0;background:var(--p4);color:#fff;padding:11px 14px;z-index:9000;align-items:center;justify-content:space-between">
+  <span>📱 Instalar en tu celular</span>
+  <button id="install-btn" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">Instalar</button>
+</div>
+<div id="toast"></div>
+<div id="overlay" onclick="closeDrawer()"></div>
+<div id="app">
+<div id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">🏠</div>
+    <div class="sidebar-app-name">Gestor del Hogar</div>
+    <div class="sidebar-city">Valledupar, Cesar 🇨🇴</div>
+    <div class="sidebar-mes-row">
+      <select class="sidebar-mes-sel" id="mesSelect" id="mesSelect">
+        <option>Enero 2026</option><option>Febrero 2026</option><option>Marzo 2026</option>
+        <option>Abril 2026</option><option>Mayo 2026</option><option>Junio 2026</option>
+        <option>Julio 2026</option><option>Agosto 2026</option><option>Septiembre 2026</option>
+        <option>Octubre 2026</option><option>Noviembre 2026</option><option selected>Diciembre 2026</option>
+      </select>
+      <button class="sidebar-save-btn" onclick="guardarMes()">💾</button>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">Principal</div>
+    <button class="nav-btn active" onclick="nav('inicio',this)">
+      <span class="nav-ico">🏠</span><span class="nav-label">Inicio</span>
+    </button>
+
+    <div class="nav-group">Finanzas</div>
+    <button class="nav-btn" onclick="nav('ingresos',this)">
+      <span class="nav-ico">💰</span><span class="nav-label">Ingresos</span>
+    </button>
+    <button class="nav-btn" onclick="nav('gastos',this)">
+      <span class="nav-ico">💸</span><span class="nav-label">Gastos</span>
+    </button>
+    <button class="nav-btn" onclick="nav('tarjetas',this)">
+      <span class="nav-ico">💳</span><span class="nav-label">Tarjetas</span>
+    </button>
+    <button class="nav-btn" onclick="nav('deudas',this)">
+      <span class="nav-ico">🔴</span><span class="nav-label">Deudas</span>
+      <span class="nav-badge" id="badge-deudas">0</span>
+    </button>
+    <button class="nav-btn" onclick="nav('fna',this)">
+      <span class="nav-ico">🏦</span><span class="nav-label">FNA</span>
+    </button>
+
+    <div class="nav-group">Hogar</div>
+    <button class="nav-btn" onclick="nav('mercado',this)">
+      <span class="nav-ico">🛒</span><span class="nav-label">Lista de Mercado</span>
+    </button>
+    <button class="nav-btn" onclick="nav('servicios',this)">
+      <span class="nav-ico">💡</span><span class="nav-label">Servicios Públicos</span>
+    </button>
+    <button class="nav-btn" onclick="nav('mantenimiento',this)">
+      <span class="nav-ico">🔧</span><span class="nav-label">Mantenimiento</span>
+    </button>
+    <button class="nav-btn" onclick="nav('enseres',this)">
+      <span class="nav-ico">🪑</span><span class="nav-label">Enseres del Hogar</span>
+    </button>
+
+    <div class="nav-group">Vida y Gastos</div>
+    <button class="nav-btn" onclick="nav('movilidad',this)">
+      <span class="nav-ico">🚗</span><span class="nav-label">Movilidad</span>
+    </button>
+    <button class="nav-btn" onclick="nav('mascotas',this)">
+      <span class="nav-ico">🐾</span><span class="nav-label">Mascotas</span>
+    </button>
+    <button class="nav-btn" onclick="nav('ocio',this)">
+      <span class="nav-ico">🎉</span><span class="nav-label">Ocio</span>
+    </button>
+    <button class="nav-btn" onclick="nav('centrocomercial',this)">
+      <span class="nav-ico">🏪</span><span class="nav-label">Centro Comercial</span>
+    </button>
+    <button class="nav-btn" onclick="nav('recordatorios',this)">
+      <span class="nav-ico">🔔</span><span class="nav-label">Recordatorios</span>
+    </button>
+
+    <div class="nav-group">Precios</div>
+    <button class="nav-btn" onclick="nav('precios',this)">
+      <span class="nav-ico">🏷️</span><span class="nav-label">Precios del Mercado</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer" style="display:flex;flex-direction:column;gap:6px;align-items:center">
+  <button onclick="abrirVisorDatos();closeDrawer();" style="background:linear-gradient(90deg,var(--p4),var(--p2));color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;width:100%">📊 Ver PDF / Excel</button>
+  <span style="font-size:10px;color:var(--muted)">v3.0 · Gestor del Hogar Valledupar</span>
+</div>
+</div>
+
+
+<div class="main-area">
+  <div id="topbar">
+    <button class="menu-btn" onclick="toggleDrawer()">☰</button>
+    <span id="topbar-title">🏠 Inicio</span>
+    <span id="topbar-usuario" onclick="cambiarUsuarioDesdeTopbar()" 
+      style="font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;
+             background:rgba(255,255,255,.1);border-radius:12px;
+             padding:4px 10px;white-space:nowrap;flex-shrink:0">
+      👤 ...
+    </span>
+    <button id="topbar-save" onclick="guardarMes()">💾</button>
+    <button onclick="abrirVisorDatos()" style="background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:20px;padding:6px 11px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">📊 Ver</button>
+  </div>
+  <div class="desktop-top">
+    <span class="desktop-top-title" id="desktop-title">🏠 Inicio</span>
+    <span style="font-size:12px;color:var(--muted)" id="desktop-mes"></span>
+  </div>
+  <div class="content" id="content">
+<!-- ===== INICIO ===== -->
+<div class="sec active" id="sec-inicio">
+  <!-- MONTO TOTAL -->
+  <div class="card" style="margin-bottom:10px">
+    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px">💰 Salario / Monto Total Mensual</div>
+    <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px">
+      <input type="number" id="monto-total" placeholder="Ingresa tu salario o ingreso total $"
+        style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 10px;font-size:14px;font-weight:600;min-width:0"
+        oninput="dividirQuincenas(this.value)"/>
+      <button onclick="guardarMontoTotal()" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:9px 13px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Dividir</button>
+    </div>
+    <div id="mt-preview" style="display:none;background:var(--bg3);border-radius:8px;padding:9px;font-size:12px">
+      <div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--muted)">Quincena 1 (50%)</span><span style="color:var(--accent);font-weight:600" id="mt-q1">$0</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0"><span style="color:var(--muted)">Quincena 2 (50%)</span><span style="color:var(--accent);font-weight:600" id="mt-q2">$0</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;border-top:1px solid var(--border);margin-top:4px"><span style="color:var(--muted)">Neto estimado (−8% seg. social)</span><span style="color:var(--green);font-weight:700" id="mt-neto">$0</span></div>
+    </div>
+  </div>
+  <!-- QUINCENAS -->
+  <div class="qgrid">
+    <div class="qcard">
+      <div class="qh"><span class="qt">💵 Quincena 1</span><span class="qlk" id="q1l">🔓 Activa</span></div>
+      <div class="qrow"><input type="number" id="q1i" placeholder="Monto bruto $"/><button class="qbtn" id="q1b" onclick="gQ(1)">OK</button></div>
+      <div class="qtot">Neto: <b id="q1v">$0</b></div>
+      <div class="desc-box" id="desc1"></div>
+    </div>
+    <div class="qcard">
+      <div class="qh"><span class="qt">💵 Quincena 2</span><span class="qlk" id="q2l">🔒 Bloqueada</span></div>
+      <div class="qrow"><input type="number" id="q2i" placeholder="Monto bruto $" disabled/><button class="qbtn" id="q2b" onclick="gQ(2)" disabled>OK</button></div>
+      <div class="qtot">Neto: <b id="q2v">$0</b></div>
+      <div class="desc-box" id="desc2"></div>
+    </div>
+  </div>
+  <!-- RESUMEN -->
+  <div class="sumgrid">
+    <div class="sumcard"><div class="sumlbl">Ingresos</div><div class="sumval" style="color:var(--green)" id="si">$0</div></div>
+    <div class="sumcard"><div class="sumlbl">Gastos</div><div class="sumval" style="color:var(--red)" id="sg">$0</div></div>
+    <div class="sumcard"><div class="sumlbl">Balance</div><div class="sumval" id="sb">$0</div></div>
+    <div class="sumcard"><div class="sumlbl">Registros</div><div class="sumval" style="color:var(--purple)" id="sr">0</div></div>
+  </div>
+  <!-- Deudas pendientes resumen -->
+  <div class="card">
+    <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">⚠️ Deudas pendientes</div>
+    <div id="deudas-resumen" style="font-size:12px;color:var(--muted)">Sin deudas registradas</div>
+  </div>
+</div>
+
+<!-- ===== MERCADO ===== -->
+<div class="sec" id="sec-mercado">
+
+  <!-- HEADER -->
+  <div class="sh">
+    <div class="sh-left">
+      <div class="sh-ico" style="background:rgba(21,101,192,.2)">🛒</div>
+      <div><div class="sh-title">Listas de Mercado</div><div class="sh-sub">Por tienda · Valledupar</div></div>
+    </div>
+    <div class="ebs">
+      <button class="btn-e bp" onclick="xPDFMercado()">📄 PDF+QR</button>
+      <button class="btn-e be" onclick="xExcel('mercado')">Excel</button>
+      <button class="btn-e bw" onclick="xWA('mercado')">WA</button>
+      <button class="btn-e" style="background:linear-gradient(90deg,#7C3AED,#A78BFA);color:#fff" onclick="escanearDesdeQR()">📷 QR</button>
+    </div>
+  </div>
+
+  <!-- SELECTOR DE TIENDA -->
+  <div class="card" style="margin-bottom:10px;padding:12px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">📍 Selecciona la tienda</div>
+    <div id="tienda-tabs" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:2px">
+      <button class="tienda-tab active" data-tienda="Plaza de Mercado" onclick="selTiendaTab(this)"><span>🏛️</span>Plaza Mercado</button>
+      <button class="tienda-tab" data-tienda="Éxito" onclick="selTiendaTab(this)"><span>🟡</span>Éxito</button>
+      <button class="tienda-tab" data-tienda="Olímpica" onclick="selTiendaTab(this)"><span>🏪</span>Olímpica</button>
+      <button class="tienda-tab" data-tienda="Mi Futuro" onclick="selTiendaTab(this)"><span>🏬</span>Mi Futuro</button>
+      <button class="tienda-tab" data-tienda="D1" onclick="selTiendaTab(this)"><span>🔵</span>D1</button>
+      <button class="tienda-tab" data-tienda="Ara" onclick="selTiendaTab(this)"><span>🟢</span>Ara</button>
+      <button class="tienda-tab" data-tienda="Don Campo" onclick="selTiendaTab(this)"><span>🌿</span>Don Campo</button>
+      <button class="tienda-tab" data-tienda="Jumbo" onclick="selTiendaTab(this)"><span>🔴</span>Jumbo</button>
+      <button class="tienda-tab" data-tienda="Alkosto" onclick="selTiendaTab(this)"><span>🛒</span>Alkosto</button>
+      <button class="tienda-tab" data-tienda="Carulla" onclick="selTiendaTab(this)"><span>🛍️</span>Carulla</button>
+      <button class="tienda-tab" data-tienda="Surtimax" onclick="selTiendaTab(this)"><span>🏪</span>Surtimax</button>
+      <button class="tienda-tab" data-tienda="Tienda de barrio" onclick="selTiendaTab(this)"><span>🏠</span>Tienda barrio</button>
+    </div>
+    <!-- Indicador tienda activa + botón Google Maps -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+      <div style="font-size:12px;color:var(--p3);font-weight:600">
+        Lista activa: <span id="tienda-activa-label">Plaza de Mercado</span>
+        <span id="tienda-activa-count" style="color:var(--muted);font-weight:400;font-size:11px"></span>
+      </div>
+      <button onclick="abrirEnMaps()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--muted);border-radius:8px;padding:5px 11px;font-size:11px;cursor:pointer">🗺️ Maps</button>
+    </div>
+  </div>
+
+  <!-- RESUMEN DE TODAS LAS TIENDAS -->
+  <div id="resumen-tiendas" style="display:none" class="card" style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">📊 Resumen por tienda</div>
+    <div id="resumen-tiendas-content"></div>
+  </div>
+
+  <!-- SCANNER -->
+  <div class="scanbox" onclick="document.getElementById('scanMerc').click()">
+    <div style="font-size:28px;margin-bottom:4px">📷</div>
+    <div style="font-size:12px;color:var(--muted)">Escanear etiqueta de precio o factura</div>
+    <input type="file" id="scanMerc" accept="image/*" capture="environment" style="display:none" onchange="scanMercado(this)"/>
+  </div>
+  <div id="scan-merc-res" style="display:none;background:var(--bg3);border-radius:8px;padding:9px;margin-bottom:9px;font-size:12px;color:var(--teal)"></div>
+
+  <!-- FORMULARIO AGREGAR PRODUCTO -->
+  <div class="card" style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">➕ Agregar producto</div>
+    <div class="fg">
+      <select id="mc">
+        <optgroup label="🥩 Carnes"><option>🥩 Res - Posta</option><option>🥩 Res - Costilla</option><option>🥩 Res - Lomo fino</option><option>🥩 Res - Sobrebarriga</option><option>🥩 Res - Muchacho</option><option>🥩 Res - Falda</option><option>🥩 Res - Molida</option><option>🥩 Res - Churrasco</option><option>🥩 Res - Lengua</option><option>🥩 Cerdo - Chuleta</option><option>🥩 Cerdo - Pernil</option><option>🥩 Cerdo - Costilla</option><option>🥩 Cerdo - Lomo</option><option>🥩 Cerdo - Panceta</option><option>🥩 Cerdo - Tocino</option><option>🍗 Pollo - Pechuga</option><option>🍗 Pollo - Muslo</option><option>🍗 Pollo - Ala</option><option>🍗 Pollo - Entero</option><option>🍗 Pollo - Molido</option></optgroup>
+        <optgroup label="🫀 Vísceras"><option>🫀 Hígado de res</option><option>🫀 Hígado de pollo</option><option>🫀 Corazón de res</option><option>🫀 Corazón de pollo</option><option>🫀 Bofe (pulmón)</option><option>🫀 Riñón de res</option><option>🫀 Mondongo</option><option>🫀 Librillo</option><option>🫀 Panza</option><option>🫀 Seso de res</option><option>🫀 Cola de res</option><option>🫀 Patas de res</option><option>🫀 Menudencias de pollo</option></optgroup>
+        <optgroup label="🐟 Mar y Río"><option>🐟 Bocachico</option><option>🐟 Bagre</option><option>🐟 Mojarra</option><option>🐟 Róbalo</option><option>🐟 Camarón</option><option>🐟 Atún en lata</option><option>🐟 Sardina en lata</option></optgroup>
+        <optgroup label="🥛 Lácteos y Huevos"><option>🥛 Leche entera</option><option>🥛 Leche descremada</option><option>🥛 Leche en polvo</option><option>🥛 Leche UHT</option><option>🧀 Queso costeño</option><option>🧀 Queso mozzarella</option><option>🧀 Queso doble crema</option><option>🧀 Queso campesino</option><option>🧈 Mantequilla</option><option>🧈 Margarina</option><option>🍦 Yogur natural</option><option>🍦 Yogur con frutas</option><option>🍶 Kumis</option><option>🍶 Suero costeño</option><option>🍶 Crema de leche</option><option>🍮 Arequipe</option><option>🥚 Huevo de gallina</option><option>🥚 Huevo de codorniz</option></optgroup>
+        <optgroup label="🥦 Verduras"><option>🥦 Ahuyama</option><option>🥦 Berenjena</option><option>🥦 Brócoli</option><option>🥦 Cebolla cabezona blanca</option><option>🥦 Cebolla cabezona roja</option><option>🥦 Cebolla larga</option><option>🥦 Cilantro</option><option>🥦 Espinaca</option><option>🥦 Habichuela</option><option>🥦 Lechuga</option><option>🥦 Maíz chócolo</option><option>🥦 Pepino cohombro</option><option>🥦 Pimentón rojo</option><option>🥦 Pimentón verde</option><option>🥦 Plátano verde</option><option>🥦 Plátano maduro</option><option>🥦 Repollo</option><option>🥦 Tomate chonto</option><option>🥦 Yuca</option><option>🥦 Zanahoria</option><option>🥦 Ajo</option><option>🥦 Papa pastusa</option><option>🥦 Papa criolla</option><option>🥦 Ñame</option><option>🥦 Remolacha</option><option>🥦 Acelga</option></optgroup>
+        <optgroup label="🍎 Frutas"><option>🍎 Aguacate</option><option>🍎 Banano</option><option>🍎 Guayaba</option><option>🍎 Limón tahití</option><option>🍎 Maracuyá</option><option>🍎 Mango tommy</option><option>🍎 Mango hilacha</option><option>🍎 Mandarina</option><option>🍎 Melón</option><option>🍎 Mora</option><option>🍎 Naranja</option><option>🍎 Papaya</option><option>🍎 Patilla/Sandía</option><option>🍎 Piña</option><option>🍎 Corozo</option><option>🍎 Níspero</option><option>🍎 Tamarindo</option><option>🍎 Coco</option><option>🍎 Guanábana</option><option>🍎 Anón</option></optgroup>
+        <optgroup label="🌾 Granos y Pastas"><option>🌾 Arroz</option><option>🌾 Fríjol rojo</option><option>🌾 Fríjol negro</option><option>🌾 Lenteja</option><option>🌾 Garbanzo</option><option>🌾 Arveja</option><option>🌾 Harina de maíz</option><option>🌾 Avena</option><option>🍝 Pasta fideo</option><option>🍝 Pasta espagueti</option><option>🍝 Pasta macarrón</option><option>🍝 Pasta codito</option></optgroup>
+        <optgroup label="🫙 Despensa"><option>🧂 Sal</option><option>🍚 Azúcar</option><option>🟤 Panela</option><option>🌿 Tomillo</option><option>🌿 Laurel</option><option>🌿 Orégano</option><option>🌿 Clavito de olor</option><option>🌿 Pimienta de olor</option><option>🌿 Canela</option><option>🌿 Cúrcuma</option><option>🌿 Achiote/Color</option><option>🌿 Comino</option><option>🌿 Pimienta negra</option><option>🌿 Sazón completo</option><option>🫒 Aceite de oliva</option><option>🫒 Aceite de aguacate</option><option>🫒 Aceite vegetal</option><option>🫒 Aceite de girasol</option><option>🫒 Aceite de coco</option><option>🥫 Salsa de tomate</option><option>🥫 Mayonesa</option><option>🥫 Mostaza</option><option>🥫 Vinagre</option><option>☕ Café molido</option><option>☕ Café instantáneo</option><option>🍵 Té en bolsas</option><option>🍫 Chocolate de mesa</option></optgroup>
+        <optgroup label="🍞 Panadería"><option>🍞 Pan tajado</option><option>🍞 Pan francés</option><option>🍞 Pan integral</option><option>🍞 Arepa</option><option>🍞 Galletas</option></optgroup>
+        <optgroup label="🧃 Bebidas"><option>🧃 Agua en botella</option><option>🧃 Jugo en caja</option><option>🧃 Gaseosa</option><option>🧃 Agua de panela</option></optgroup>
+        <optgroup label="🧹 Aseo del Hogar">
+          <option>🧹 Jabón lavaplatos líquido</option>
+          <option>🧹 Jabón lavaplatos barra</option>
+          <option>🧹 Detergente en polvo</option>
+          <option>🧹 Detergente líquido ropa</option>
+          <option>🧹 Jabón líquido de ropa</option>
+          <option>🧹 Cápsulas de ropa</option>
+          <option>🧹 Perlas aromatizantes ropa</option>
+          <option>🧹 Jabón azul (barra)</option>
+          <option>🧹 Jabón de barra multipropósito</option>
+          <option>🧹 Jabón de coco barra</option>
+          <option>🧹 Jabón de coco líquido</option>
+          <option>🧹 Jabón líquido multiusos</option>
+          <option>🧹 Suavizante / Blandox</option>
+          <option>🧹 Blanqueador / Clorox</option>
+          <option>🧹 Desinfectante líquido</option>
+          <option>🧹 Papel higiénico</option>
+          <option>🧹 Bolsas de basura</option>
+          <option>🧹 Esponjas</option>
+          <option>🧹 Escoba</option>
+          <option>🧹 Trapero</option>
+          <option>🧹 Recogedor</option>
+          <option>🧹 Limpiavidrios</option>
+          <option>🧹 Quitasarro / Baño</option>
+        </optgroup>
+        <optgroup label="🌸 Aromatizantes">
+          <option>🌸 Ambientador spray hogar</option>
+          <option>🌸 Ambientador de lencería</option>
+          <option>🌸 Ambientador eléctrico</option>
+          <option>🌸 Ambientador para carro</option>
+          <option>🌸 Velas aromáticas</option>
+          <option>🌸 Incienso / Sahumerio</option>
+          <option>🌸 Difusor de esencias</option>
+          <option>🌸 Aromatizante en gel</option>
+          <option>🌸 Suavizante aromatizante</option>
+          <option>🌸 Sachet aromatizante</option>
+        </optgroup>
+        <optgroup label="🔋 Accesorios del Hogar">
+          <option>🔋 Pilas AA</option>
+          <option>🔋 Pilas AAA</option>
+          <option>🔋 Pilas C (mediana)</option>
+          <option>🔋 Pilas D (grande)</option>
+          <option>🔋 Pilas de botón</option>
+          <option>🔋 Focos / Bombillos LED</option>
+          <option>🔋 Bombillo ahorrativo</option>
+          <option>🔋 Extensión eléctrica</option>
+          <option>🔋 Cinta pegante</option>
+          <option>🔋 Cinta enmascarar</option>
+          <option>🔋 Ganchos de ropa</option>
+          <option>🔋 Bolsas ziploc</option>
+          <option>🔋 Papel aluminio</option>
+          <option>🔋 Papel plástico / Vinipel</option>
+          <option>🔋 Guantes de cocina</option>
+          <option>🔋 Guantes de caucho</option>
+          <option>🔋 Filtros de café</option>
+          <option>🔋 Mondadientes</option>
+          <option>🔋 Servilletas</option>
+          <option>🔋 Vasos desechables</option>
+          <option>🔋 Platos desechables</option>
+          <option>🔋 Cubiertos desechables</option>
+        </optgroup>
+        <optgroup label="🧴 Higiene Personal">
+          <option>🧴 Jabón de baño barra</option>
+          <option>🧴 Jabón de baño líquido</option>
+          <option>🧴 Shampoo</option>
+          <option>🧴 Acondicionador</option>
+          <option>🧴 Crema dental</option>
+          <option>🧴 Enjuague bucal</option>
+          <option>🧴 Cepillo de dientes</option>
+          <option>🧴 Desodorante roll-on</option>
+          <option>🧴 Desodorante spray</option>
+          <option>🧴 Crema corporal</option>
+          <option>🧴 Pañales bebé</option>
+          <option>🧴 Toallas húmedas</option>
+          <option>🧴 Toallas higiénicas</option>
+          <option>🧴 Protector diario</option>
+          <option>🧴 Algodón</option>
+          <option>🧴 Hilo dental</option>
+          <option>🧴 Máquina de afeitar</option>
+          <option>🧴 Espuma de afeitar</option>
+        </optgroup>
+      </select>
+      <input id="mi" placeholder="Nombre del producto (opcional si seleccionas arriba)"/>
+      <div class="fr3">
+        <input id="mp" type="number" placeholder="Precio $"/>
+        <input id="mq" type="number" placeholder="Cant." min="1" value="1"/>
+        <input id="mu" placeholder="kg / lt / und"/>
+      </div>
+      <input id="mf" type="date" style="display:none"/>
+      <button class="badd" onclick="addM()">+ Agregar a lista de <span id="btn-tienda-nombre">Plaza de Mercado</span></button>
+    </div>
+  </div>
+
+  <!-- FILTRO DE CATEGORÍA (chips) -->
+  <!-- Buscador de productos en mercado -->
+  <div style="position:relative;margin-bottom:10px">
+    <input id="merc-buscar" type="text" placeholder="🔍 Buscar producto en lista de mercado..."
+      style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius-sm);padding:10px 36px 10px 14px;font-size:13px;width:100%"
+      oninput="buscarEnMercado(this.value)"/>
+    <button onclick="document.getElementById('merc-buscar').value='';buscarEnMercado('')"
+      style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px">✕</button>
+  </div>
+  <div id="merc-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+    <button class="chip active" onclick="filtrarMercadoCat('',this)">Todos</button>
+    <button class="chip" onclick="filtrarMercadoCat('Carnes',this)">🥩 Carnes</button>
+    <button class="chip" onclick="filtrarMercadoCat('Vísceras',this)">🫀 Vísceras</button>
+    <button class="chip" onclick="filtrarMercadoCat('Lácteos',this)">🥛 Lácteos</button>
+    <button class="chip" onclick="filtrarMercadoCat('Verduras',this)">🥦 Verduras</button>
+    <button class="chip" onclick="filtrarMercadoCat('Frutas',this)">🍎 Frutas</button>
+    <button class="chip" onclick="filtrarMercadoCat('Despensa',this)">🫙 Despensa</button>
+    <button class="chip" onclick="filtrarMercadoCat('Aseo',this)">🧹 Aseo</button>
+    <button class="chip" onclick="filtrarMercadoCat('Higiene',this)">🧴 Higiene</button>
+  </div>
+
+  <!-- LISTA DE LA TIENDA ACTIVA -->
+  <div id="mercado-content"></div>
+  <div id="chart-mercado" class="cw" style="display:none"><div class="ct">Gasto por categoría</div><div id="chart-mercado-bars"></div></div>
+</div>
+
+<!-- ===== GASTOS ===== -->
+<div class="sec" id="sec-gastos">
+  <div class="sh"><div class="st">💸 Gastos</div>
+    <div class="ebs"><button class="btn bp" onclick="xPDFs('gastos')">📄 PDF+QR</button><button class="btn be" onclick="xExcel('gastos')">Excel</button><button class="btn bw" onclick="xWA('gastos')">WA</button></div>
+  </div>
+  <div class="scanbox" onclick="abrirScannerIA('gastos')" style="margin-bottom:10px">
+  <div style="font-size:22px;margin-bottom:3px">🤖</div>
+  <div style="font-size:12px;color:var(--muted)">Escáner IA — auto-completa desde foto</div>
+  <input type="file" id="scan-gastos" accept="image/*" capture="environment" style="display:none" onchange="scannerIA(this,'gastos')"/>
+</div>
+<div id="scan-gastos-res" style="display:none;background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px"></div>
+<div class="fg">
+    <input id="gd" placeholder="Descripción"/>
+    <div class="fr2">
+      <select id="gc"><option>Alimentación</option><option>Transporte</option><option>Educación</option><option>Salud</option><option>Ropa</option><option>Otros</option></select>
+      <input id="gf" type="date"/>
+    </div>
+    <div class="fr2"><input id="gm" type="number" placeholder="Monto $"/><input id="gn" placeholder="Nota"/></div>
+    <button class="badd" onclick="addG()">+ Registrar gasto</button>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Cat.</th><th>Monto</th><th>Nota</th><th></th></tr></thead><tbody id="gt"></tbody></table></div>
+  <div class="tot-row" style="color:var(--red)">Total: <span id="gtot">$0</span></div>
+</div>
+
+<!-- ===== SERVICIOS ===== -->
+<div class="sec" id="sec-servicios">
+  <div class="sh"><div class="st">💡 Servicios — Valledupar</div>
+    <div class="ebs"><button class="btn bp" onclick="xPDFs('servicios')">📄 PDF+QR</button><button class="btn be" onclick="xExcel('servicios')">Excel</button><button class="btn bw" onclick="xWA('servicios')">WA</button></div>
+  </div>
+  <!-- Scanner IA servicios -->
+  <div class="scanbox" onclick="document.getElementById('scanServ').click()">
+    <div class="scanico">📄</div>
+    <div class="scanlbl">📷 Escanear factura de servicio (agua, gas, luz)</div>
+    <input type="file" id="scanServ" accept="image/*" capture="environment" style="display:none" onchange="scanServicio(this)"/>
+  </div>
+  <div id="scan-serv-res" style="display:none;background:var(--bg3);border-radius:8px;padding:9px;margin-bottom:9px;font-size:12px"></div>
+  <div class="fg">
+    <select id="st2">
+      <optgroup label="Energía"><option>⚡ Afinia (antes Electricaribe)</option><option>⚡ Energía prepago</option></optgroup>
+      <optgroup label="Agua"><option>💧 EMDUPAR (Aguas del Cesar)</option><option>💧 Aguazul</option></optgroup>
+      <optgroup label="Gas"><option>🔥 Gases del Caribe</option><option>🔥 Gas propano (pipa)</option></optgroup>
+      <optgroup label="Internet / Telefonía"><option>📡 Claro hogar</option><option>📡 Movistar hogar</option><option>📡 Tigo hogar</option><option>📡 WOM hogar</option><option>📱 Claro móvil</option><option>📱 Movistar móvil</option><option>📱 Tigo móvil</option><option>📱 WOM móvil</option></optgroup>
+      <optgroup label="TV"><option>📺 DirecTV</option><option>📺 Claro TV</option><option>📺 Tigo TV</option></optgroup>
+      <optgroup label="Streaming"><option>🎬 Netflix</option><option>🎬 Disney+</option><option>🎬 Max</option><option>🎬 Amazon Prime</option><option>🎬 Spotify</option><option>🎬 YouTube Premium</option></optgroup>
+      <optgroup label="Seguridad"><option>🔒 CCTV/Cámaras</option><option>🔒 Alarma hogar</option><option>🔒 Vigilancia conjunto</option></optgroup>
+      <optgroup label="Vivienda"><option>🏠 Arriendo</option><option>🏠 Administración</option><option>🏠 Predial</option><option>🏠 Hipoteca</option></optgroup>
+      <optgroup label="Salud/Pensión"><option>❤️ EPS</option><option>❤️ Medicina prepagada</option><option>❤️ ARL</option><option>❤️ Pensión</option></optgroup>
+      <optgroup label="Educación"><option>📚 Pensión colegio</option><option>📚 Universidad</option><option>📚 Jardín/Guardería</option></optgroup>
+    </select>
+    <div class="fr2"><input id="se2" placeholder="Empresa / proveedor"/><input id="sf2" type="date"/></div>
+    <div class="fr2"><input id="sm2" type="number" placeholder="Monto $"/><input id="sn2" placeholder="N° factura / ciclo"/></div>
+    <button class="badd" onclick="addS()">+ Registrar servicio</button>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Servicio</th><th>Empresa</th><th>Monto</th><th>Estado</th><th>Nota</th><th></th></tr></thead><tbody id="svt"></tbody></table></div>
+  <div class="tot-row" style="color:var(--amber)">Total: <span id="svtot">$0</span></div>
+</div>
+
+<!-- ===== INGRESOS ===== -->
+<div class="sec" id="sec-ingresos">
+  <div class="sh"><div class="st">💰 Ingresos</div>
+    <div class="ebs"><button class="btn bp" onclick="xPDFs('ingresos')">📄 PDF+QR</button><button class="btn be" onclick="xExcel('ingresos')">Excel</button><button class="btn bw" onclick="xWA('ingresos')">WA</button></div>
+  </div>
+  <div class="scanbox" onclick="abrirScannerIA('ingresos')" style="margin-bottom:10px">
+  <div style="font-size:22px;margin-bottom:3px">🤖</div>
+  <div style="font-size:12px;color:var(--muted)">Escáner IA — auto-completa desde foto</div>
+  <input type="file" id="scan-ingresos" accept="image/*" capture="environment" style="display:none" onchange="scannerIA(this,'ingresos')"/>
+</div>
+<div id="scan-ingresos-res" style="display:none;background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px"></div>
+<div class="fg">
+    <input id="if2" placeholder="Fuente de ingreso"/>
+    <div class="fr2"><select id="it2"><option>Salario</option><option>Freelance</option><option>Negocio</option><option>Arriendo</option><option>Subsidio</option><option>Cesantías</option><option>Otros</option></select><input id="ifd" type="date"/></div>
+    <div class="fr2"><input id="im" type="number" placeholder="Monto $"/><input id="in2" placeholder="Nota"/></div>
+    <button class="badd" onclick="addI()">+ Registrar ingreso</button>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Fuente</th><th>Tipo</th><th>Monto</th><th>Nota</th><th></th></tr></thead><tbody id="ivt"></tbody></table></div>
+  <div class="tot-row" style="color:var(--green)">Total: <span id="ivtot">$0</span></div>
+</div>
+
+<!-- ===== MASCOTAS ===== -->
+<div class="sec" id="sec-mascotas">
+  <div class="sh"><div class="st">🐾 Mascotas</div>
+    <div class="ebs"><button class="btn bp" onclick="xPDFs('mascotas')">📄 PDF+QR</button><button class="btn be" onclick="xExcel('mascotas')">Excel</button><button class="btn bw" onclick="xWA('mascotas')">WA</button></div>
+  </div>
+  <div class="scanbox" onclick="abrirScannerIA('mascotas')" style="margin-bottom:10px">
+  <div style="font-size:22px;margin-bottom:3px">🤖</div>
+  <div style="font-size:12px;color:var(--muted)">Escáner IA — auto-completa desde foto</div>
+  <input type="file" id="scan-mascotas" accept="image/*" capture="environment" style="display:none" onchange="scannerIA(this,'mascotas')"/>
+</div>
+<div id="scan-mascotas-res" style="display:none;background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px"></div>
+<div class="fg">
+    <div class="fr2">
+      <select id="manes"><option>🐶 Perro</option><option>🐱 Gato</option><option>🦜 Ave</option><option>🐠 Pez</option><option>🐾 Otro</option></select>
+      <input id="mannom" placeholder="Nombre de la mascota"/>
+    </div>
+    <div class="fr2"><select id="manc"><option>Comida</option><option>Veterinario</option><option>Vacuna</option><option>Baño/Peluquería</option><option>Juguetes</option><option>Medicamento</option><option>Accesorios</option><option>Otros</option></select><input id="manfd" type="date"/></div>
+    <div class="fr2"><input id="manm" type="number" placeholder="Costo $"/><input id="mann" placeholder="Nota"/></div>
+    <button class="badd" onclick="addMas()">+ Registrar</button>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Nombre</th><th>Cat.</th><th>Costo</th><th>Nota</th><th></th></tr></thead><tbody id="mast"></tbody></table></div>
+  <div class="tot-row" style="color:var(--purple)">Total: <span id="mastot">$0</span></div>
+</div>
+
+<!-- ===== TARJETAS ===== -->
+<div class="sec" id="sec-tarjetas">
+  <div class="sh"><div class="st">💳 Tarjetas</div>
+    <div class="ebs"><button class="btn bp" onclick="xPDFs('tarjetas')">PDF</button><button class="btn bw" onclick="xWA('tarjetas')">WA</button></div>
+  </div>
+  <div class="card">
+    <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">+ Nueva tarjeta</div>
+    <div class="fg">
+      <input id="tcnom" placeholder="Nombre (ej: Visa Bancolombia)"/>
+      <div class="fr2"><select id="tcbanco"><option>Bancolombia</option><option>Banco de Bogotá</option><option>Davivienda</option><option>BBVA</option><option>Scotiabank Colpatria</option><option>Banco Caja Social</option><option>Falabella</option><option>Éxito</option><option>Otro</option></select><select id="tcred"><option>Visa</option><option>Mastercard</option><option>Amex</option><option>Diners</option></select></div>
+      <div class="fr2"><input id="tclim" type="number" placeholder="Cupo total $"/><input id="tccut" type="number" placeholder="Día de corte"/></div>
+      <button class="badd" onclick="addTarjeta()">+ Agregar tarjeta</button>
+    </div>
+  </div>
+  <div id="tarjetas-list"></div>
+  <div class="card" style="margin-top:4px">
+    <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">Registrar gasto en tarjeta</div>
+    <div class="fg">
+      <select id="tcsel" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 10px;font-size:13px;width:100%"><option>— Selecciona tarjeta —</option></select>
+      <input id="tgdesc" placeholder="Descripción"/>
+      <div class="fr2"><input id="tgmonto" type="number" placeholder="Monto $"/><input id="tgcuotas" type="number" placeholder="Cuotas" min="1" value="1"/></div>
+      <div class="fr2"><input id="tgfecha" type="date"/><input id="tgnota" placeholder="Nota"/></div>
+      <button class="badd" onclick="addGastoTC()">+ Registrar en tarjeta</button>
+    </div>
+  </div>
+  <div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>Fecha</th><th>Tarjeta</th><th>Descripción</th><th>Monto</th><th>Cuotas</th><th>c/mes</th><th></th></tr></thead><tbody id="tgt"></tbody></table></div>
+  <div class="tot-row" style="color:var(--accent)">Total: <span id="tgtot">$0</span></div>
+</div>
+
+<!-- ===== MOVILIDAD ===== -->
+<div class="sec" id="sec-movilidad">
+  <div class="sh"><div class="st">🚗 Movilidad</div>
+    <div class="ebs"><button class="btn bp" onclick="xPDFs('movilidad')">📄 PDF+QR</button><button class="btn be" onclick="xExcel('movilidad')">Excel</button><button class="btn bw" onclick="xWA('movilidad')">WA</button></div>
+  </div>
+  <div class="scanbox" onclick="abrirScannerIA('movilidad')" style="margin-bottom:10px">
+  <div style="font-size:22px;margin-bottom:3px">🤖</div>
+  <div style="font-size:12px;color:var(--muted)">Escáner IA — auto-completa desde foto</div>
+  <input type="file" id="scan-movilidad" accept="image/*" capture="environment" style="display:none" onchange="scannerIA(this,'movilidad')"/>
+</div>
+<div id="scan-movilidad-res" style="display:none;background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px"></div>
+<div class="fg">
+    <div class="fr2"><select id="mvveh"><option>🚗 Carro</option><option>🏍️ Moto</option></select><input id="mvplaca" placeholder="Placa / referencia"/></div>
+    <select id="mvtipo">
+      <optgroup label="Combustible"><option>⛽ Gasolina corriente</option><option>⛽ Gasolina extra</option><option>⛽ Gasolina premium</option><option>🔵 ACPM/Diésel</option></optgroup>
+      <optgroup label="Mantenimiento"><option>🔧 Aceite y filtros</option><option>🔧 Cambio de llantas</option><option>🔧 Frenos</option><option>🔧 Batería</option><option>🔧 Revisión general</option><option>🔧 Lavado y engrase</option><option>🔧 Alineación y balanceo</option><option>🔧 Reparación eléctrica</option><option>🔧 Repuestos varios</option></optgroup>
+      <optgroup label="Documentos"><option>📄 SOAT</option><option>📄 Tecnomecánica</option><option>📄 Impuesto vehicular</option><option>📄 Multa de tránsito</option></optgroup>
+      <optgroup label="Otros"><option>🅿️ Parqueadero</option><option>🚗 Peaje</option><option>🚗 Lavadero</option><option>🛡️ Seguro todo riesgo</option></optgroup>
+    </select>
+    <div class="fr3">
+      <input id="mvgal" type="number" placeholder="Galones" step="0.1"/>
+      <input id="mvmonto" type="number" placeholder="Valor $"/>
+      <input id="mvfecha" type="date"/>
+    </div>
+    <input id="mvnota" placeholder="Nota (estación, taller...)"/>
+    <button class="badd" onclick="addMov()">+ Registrar movilidad</button>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Veh.</th><th>Tipo</th><th>Gal.</th><th>Valor</th><th>Placa</th><th></th></tr></thead><tbody id="mvt"></tbody></table></div>
+  <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:7px;flex-wrap:wrap">
+    <span style="font-size:11px;color:var(--muted)">Gas: <b style="color:var(--amber)" id="mvgas">$0</b></span>
+    <span style="font-size:11px;color:var(--muted)">Mant: <b style="color:var(--teal)" id="mvmnt">$0</b></span>
+    <span style="font-size:11px;color:var(--muted)">Total: <b style="color:var(--red)" id="mvtot">$0</b></span>
+  </div>
+</div>
+
+<!-- ===== DEUDAS ===== -->
+<div class="sec" id="sec-deudas">
+  <div class="sh"><div class="st">💰 Deudas</div>
+    <div class="ebs"><button class="btn bp" onclick="xPDFs('deudas')">📄 PDF+QR</button><button class="btn bw" onclick="xWA('deudas')">WA</button></div>
+  </div>
+  <div class="scanbox" onclick="abrirScannerIA('deudas')" style="margin-bottom:10px">
+  <div style="font-size:22px;margin-bottom:3px">🤖</div>
+  <div style="font-size:12px;color:var(--muted)">Escáner IA — auto-completa desde foto</div>
+  <input type="file" id="scan-deudas" accept="image/*" capture="environment" style="display:none" onchange="scannerIA(this,'deudas')"/>
+</div>
+<div id="scan-deudas-res" style="display:none;background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px"></div>
+<div class="fg">
+    <input id="dd-nombre" placeholder="A quién se le debe / acreedor"/>
+    <div class="fr2"><input id="dd-monto" type="number" placeholder="Monto $"/><input id="dd-fecha" type="date"/></div>
+    <div class="fr2"><input id="dd-vcto" type="date" placeholder="Fecha límite pago"/><select id="dd-tipo"><option>Personal</option><option>Banco / Crédito</option><option>Tarjeta</option><option>Servicios</option><option>Otros</option></select></div>
+    <input id="dd-nota" placeholder="Nota / descripción de la deuda"/>
+    <button class="badd" onclick="addDeuda()">+ Registrar deuda</button>
+  </div>
+  <div id="deudas-list"></div>
+  <div class="tot-row" style="color:var(--red);margin-top:8px">Total deudas: <span id="deudas-tot">$0</span></div>
+</div>
+
+<!-- ===== MÁS (presupuesto, mant, ocio, cc) ===== -->
+<!-- ===== MANTENIMIENTO ===== -->
+<div class="sec" id="sec-mantenimiento">
+  <div class="sh">
+    <div class="sh-left">
+      <div class="sh-ico" style="background:rgba(20,184,166,.2)">🔧</div>
+      <div><div class="sh-title">Mantenimiento del Hogar</div></div>
+    </div>
+    <div class="ebs">
+      <button class="btn-e bp" onclick="xPDFs('mantenimiento')">📄 PDF+QR</button>
+      <button class="btn-e be" onclick="xExcel('mantenimiento')">Excel</button>
+      <button class="btn-e bw" onclick="xWA('mantenimiento')">WA</button>
+    </div>
+  </div>
+  <div class="scanbox" onclick="abrirScannerIA('mantenimiento')" style="margin-bottom:10px">
+  <div style="font-size:22px;margin-bottom:3px">🤖</div>
+  <div style="font-size:12px;color:var(--muted)">Escáner IA — auto-completa desde foto</div>
+  <input type="file" id="scan-mantenimiento" accept="image/*" capture="environment" style="display:none" onchange="scannerIA(this,'mantenimiento')"/>
+</div>
+<div id="scan-mantenimiento-res" style="display:none;background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px"></div>
+<div class="fg">
+    <select id="mtipo">
+      <optgroup label="🏠 Hogar general">
+        <option>Pintura interior</option><option>Pintura exterior</option>
+        <option>Plomería / tubería</option><option>Instalación eléctrica</option>
+        <option>Carpintería</option><option>Cerrajería</option>
+        <option>Ventanas / puertas</option><option>Pisos / cerámica</option>
+        <option>Techo / goteras</option><option>Limpieza profunda</option>
+        <option>Jardinería</option><option>Control de plagas</option>
+      </optgroup>
+      <optgroup label="🌡️ Electrodomésticos">
+        <option>Nevera / Refrigerador</option><option>Lavadora</option>
+        <option>Secadora</option><option>Horno microondas</option>
+        <option>Horno convencional</option><option>Estufa / Cocina</option>
+        <option>Calentador de agua</option><option>Aire acondicionado</option>
+        <option>Ventilador</option><option>Televisor</option>
+        <option>Licuadora</option><option>Batidora</option>
+        <option>Plancha de ropa</option><option>Aspiradora</option>
+        <option>Computador / Portátil</option><option>Impresora</option>
+        <option>Cafetera</option><option>Freidora de aire</option>
+        <option>Sanduchera / Waflera</option><option>Extractor de jugos</option>
+      </optgroup>
+      <optgroup label="🛋️ Muebles y enseres">
+        <option>Sofá / mueble sala</option><option>Cama / colchón</option>
+        <option>Armario / clóset</option><option>Mesa comedor</option>
+        <option>Sillas comedor</option><option>Escritorio</option>
+        <option>Estantería</option>
+      </optgroup>
+    </select>
+    <div class="fr2"><input id="md2" placeholder="Descripción del trabajo"/><input id="mfd" type="date"/></div>
+    <div class="fr2"><input id="mm" type="number" placeholder="Costo $"/><input id="mno" placeholder="Técnico / empresa / nota"/></div>
+    <button class="badd" onclick="addMant()">+ Registrar mantenimiento</button>
+  </div>
+  <div class="tbl-wrap">
+    <table><thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Costo</th><th>Nota</th><th></th></tr></thead>
+    <tbody id="mantt"></tbody></table>
+  </div>
+  <div class="tot-row" style="color:var(--teal)">Total: <span id="manttot">$0</span></div>
+</div>
+
+<!-- ===== OCIO ===== -->
+<div class="sec" id="sec-ocio">
+  <div class="sh">
+    <div class="sh-left">
+      <div class="sh-ico" style="background:rgba(236,72,153,.2)">🎉</div>
+      <div><div class="sh-title">Ocio y Entretenimiento</div></div>
+    </div>
+    <div class="ebs">
+      <button class="btn-e bp" onclick="xPDFs('ocio')">📄 PDF+QR</button>
+      <button class="btn-e be" onclick="xExcel('ocio')">Excel</button>
+      <button class="btn-e bw" onclick="xWA('ocio')">WA</button>
+    </div>
+  </div>
+  <div class="scanbox" onclick="abrirScannerIA('ocio')" style="margin-bottom:10px">
+  <div style="font-size:22px;margin-bottom:3px">🤖</div>
+  <div style="font-size:12px;color:var(--muted)">Escáner IA — auto-completa desde foto</div>
+  <input type="file" id="scan-ocio" accept="image/*" capture="environment" style="display:none" onchange="scannerIA(this,'ocio')"/>
+</div>
+<div id="scan-ocio-res" style="display:none;background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px"></div>
+<div class="fg">
+    <div class="fr2">
+      <input id="od" placeholder="Descripción de la actividad"/>
+      <select id="oc">
+        <optgroup label="🍽️ Gastronomía">
+          <option>Restaurante</option><option>Asadero / Parrilla</option>
+          <option>Marisquería</option><option>Cafetería</option>
+          <option>Heladería</option><option>Comida rápida</option>
+          <option>Domicilio a casa</option>
+        </optgroup>
+        <optgroup label="🎭 Entretenimiento">
+          <option>Cine</option><option>Teatro</option><option>Concierto</option>
+          <option>Festival / Feria</option><option>Club nocturno</option>
+          <option>Evento deportivo</option>
+        </optgroup>
+        <optgroup label="🏖️ Recreación">
+          <option>Parque / Paseo</option><option>Piscina</option>
+          <option>Playa / Río</option><option>Camping</option>
+          <option>Excursión</option><option>Viaje nacional</option>
+          <option>Viaje internacional</option>
+        </optgroup>
+        <optgroup label="💪 Deporte y salud">
+          <option>Gimnasio</option><option>Deporte grupal</option>
+          <option>Clases de baile</option><option>Yoga / Pilates</option>
+          <option>Spa / Masajes</option>
+        </optgroup>
+        <optgroup label="📱 Digital">
+          <option>Netflix</option><option>Disney+</option><option>Max</option>
+          <option>Amazon Prime</option><option>Spotify</option>
+          <option>Videojuegos</option><option>YouTube Premium</option>
+        </optgroup>
+        <optgroup label="🎨 Cultura">
+          <option>Museo</option><option>Exposición</option>
+          <option>Libro / Revista</option><option>Curso recreativo</option>
+        </optgroup>
+        <option>Otros</option>
+      </select>
+    </div>
+    <div class="fr3">
+      <input id="om" type="number" placeholder="Gasto $"/>
+      <input id="of" type="date"/>
+      <input id="on2" placeholder="Lugar / nota"/>
+    </div>
+    <button class="badd" style="background:linear-gradient(90deg,#9D174D,#EC4899)" onclick="addO()">+ Registrar actividad</button>
+  </div>
+  <div class="tbl-wrap">
+    <table><thead><tr><th>Fecha</th><th>Actividad</th><th>Categoría</th><th>Gasto</th><th>Nota</th><th></th></tr></thead>
+    <tbody id="oct"></tbody></table>
+  </div>
+  <div class="tot-row" style="color:var(--pink)">Total: <span id="octot">$0</span></div>
+</div>
+
+<!-- ===== CENTRO COMERCIAL ===== -->
+<div class="sec" id="sec-centrocomercial">
+  <div class="sh">
+    <div class="sh-left">
+      <div class="sh-ico" style="background:rgba(245,158,11,.2)">🏪</div>
+      <div><div class="sh-title">Centro Comercial</div></div>
+    </div>
+    <div class="ebs">
+      <button class="btn-e bp" onclick="xPDFs('centrocomercial')">📄 PDF+QR</button>
+      <button class="btn-e be" onclick="xExcel('centrocomercial')">Excel</button>
+      <button class="btn-e bw" onclick="xWA('centrocomercial')">WA</button>
+    </div>
+  </div>
+  <div class="scanbox" onclick="abrirScannerIA('centrocomercial')" style="margin-bottom:10px">
+  <div style="font-size:22px;margin-bottom:3px">🤖</div>
+  <div style="font-size:12px;color:var(--muted)">Escáner IA — auto-completa desde foto</div>
+  <input type="file" id="scan-centrocomercial" accept="image/*" capture="environment" style="display:none" onchange="scannerIA(this,'centrocomercial')"/>
+</div>
+<div id="scan-centrocomercial-res" style="display:none;background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px"></div>
+<div class="fg">
+    <div class="fr2">
+      <input id="ccd" placeholder="Nombre del artículo"/>
+      <select id="ccc">
+        <optgroup label="👗 Ropa dama">
+          <option>Blusa / Camiseta dama</option><option>Pantalón dama</option>
+          <option>Vestido</option><option>Falda</option><option>Conjunto dama</option>
+          <option>Ropa interior dama</option><option>Pijama dama</option>
+          <option>Chaqueta / Abrigo dama</option><option>Ropa deportiva dama</option>
+        </optgroup>
+        <optgroup label="👕 Ropa caballero">
+          <option>Camisa caballero</option><option>Camiseta caballero</option>
+          <option>Pantalón caballero</option><option>Jean caballero</option>
+          <option>Ropa interior caballero</option><option>Pijama caballero</option>
+          <option>Chaqueta / Abrigo caballero</option><option>Ropa deportiva caballero</option>
+          <option>Traje formal</option>
+        </optgroup>
+        <optgroup label="👶 Ropa niño/niña">
+          <option>Ropa niño</option><option>Ropa niña</option>
+          <option>Ropa bebé</option><option>Uniforme escolar</option>
+          <option>Pijama niños</option>
+        </optgroup>
+        <optgroup label="👟 Calzado">
+          <option>Tenis / Sneakers</option><option>Zapatos de vestir</option>
+          <option>Sandalias</option><option>Botas</option>
+          <option>Zapatos niños</option><option>Chanclas / Ojotas</option>
+          <option>Zapatos deportivos</option>
+        </optgroup>
+        <optgroup label="👜 Accesorios">
+          <option>Bolso / Cartera</option><option>Maletín</option>
+          <option>Mochila</option><option>Cinturón</option>
+          <option>Gorra / Sombrero</option><option>Gafas de sol</option>
+          <option>Reloj</option><option>Joyería / Bisutería</option>
+        </optgroup>
+        <optgroup label="💄 Belleza">
+          <option>Perfume / Colonia</option><option>Maquillaje</option>
+          <option>Crema / Loción</option><option>Productos capilares</option>
+          <option>Manicure / Pedicure</option>
+        </optgroup>
+        <optgroup label="🏠 Hogar">
+          <option>Electrodoméstico</option><option>Tecnología / Electrónico</option>
+          <option>Decoración</option><option>Juguetes</option>
+          <option>Artículos de cocina</option><option>Ropa de cama / Cobijas</option>
+          <option>Toallas</option>
+        </optgroup>
+        <option>Otros</option>
+      </select>
+    </div>
+    <div class="fr3">
+      <input id="ccm" type="number" placeholder="Precio $"/>
+      <input id="ccf" type="date"/>
+      <select id="cc-tienda" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius-sm);padding:10px 8px;font-size:12px;width:100%;-webkit-appearance:none">
+        <option>— Tienda —</option>
+        <option>Éxito</option><option>Jumbo</option><option>Falabella</option>
+        <option>Alkosto</option><option>Olímpica</option><option>D1</option>
+        <option>Arturo Calle</option><option>Studio F</option><option>Zara</option>
+        <option>Nike</option><option>Adidas</option><option>Tienda en línea</option>
+        <option>Mercado informal</option><option>Otro</option>
+      </select>
+    </div>
+    <input id="ccn" placeholder="Nota adicional"/>
+    <button class="badd" style="background:linear-gradient(90deg,#B45309,#F59E0B);color:#000" onclick="addCC()">+ Registrar compra</button>
+  </div>
+  <div class="tbl-wrap">
+    <table><thead><tr><th>Fecha</th><th>Artículo</th><th>Categoría</th><th>Precio</th><th>Tienda</th><th>Nota</th><th></th></tr></thead>
+    <tbody id="cct"></tbody></table>
+  </div>
+  <div class="tot-row" style="color:var(--amber)">Total: <span id="cctot">$0</span></div>
+</div>
+
+<!-- ===== RECORDATORIOS ===== -->
+<div class="sec" id="sec-recordatorios">
+  <div class="sh">
+    <div class="sh-left">
+      <div class="sh-ico" style="background:rgba(245,158,11,.2)">🔔</div>
+      <div><div class="sh-title">Recordatorios</div><div class="sh-sub">Alertas y compromisos</div></div>
+    </div>
+    <div class="ebs">
+      <button class="btn-e bp" onclick="xPDFs('recordatorios')">📄 PDF+QR</button>
+      <button class="btn-e bw" onclick="xWA('recordatorios')">WA</button>
+    </div>
+  </div>
+  <div class="fg">
+    <input id="rec-titulo" placeholder="Título del recordatorio (ej: Pagar agua, Cita médica)"/>
+    <div class="fr2">
+      <select id="rec-cat" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius-sm);padding:10px;font-size:13px;width:100%;-webkit-appearance:none">
+        <option>💊 Medicamento</option><option>📄 Documento</option>
+        <option>💰 Pago de servicio</option><option>🏥 Cita médica</option>
+        <option>🔧 Mantenimiento</option><option>🎂 Cumpleaños</option>
+        <option>📞 Llamada pendiente</option><option>🛒 Compra pendiente</option>
+        <option>📚 Estudio / tarea</option><option>🏠 Tarea del hogar</option>
+        <option>🚗 Movilidad / SOAT</option><option>👔 Cita importante</option>
+        <option>💳 Vencimiento tarjeta</option><option>Otro</option>
+      </select>
+      <input id="rec-fecha" type="date"/>
+    </div>
+    <div class="fr2">
+      <div class="fr2">
+      <input id="rec-hora" type="time"/>
+      <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:9px 12px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text);width:100%">
+          <input type="checkbox" id="rec-notif" style="width:16px;height:16px;accent-color:var(--amber)"/>
+          🔔 Activar alerta
+        </label>
+      </div>
+    </div>
+      <input id="rec-nota" placeholder="Descripción o nota adicional"/>
+    </div>
+    <button class="badd" style="background:linear-gradient(90deg,#B45309,#F59E0B);color:#000" onclick="addRecordatorio()">🔔 Agregar recordatorio</button>
+  </div>
+  <div id="recordatorios-list"></div>
+</div>
+
+<!-- ===== ENSERES DEL HOGAR ===== -->
+<div class="sec" id="sec-enseres">
+  <div class="sh">
+    <div class="sh-left">
+      <div class="sh-ico" style="background:rgba(245,158,11,.2)">🪑</div>
+      <div><div class="sh-title">Enseres del Hogar</div><div class="sh-sub">Inventario y préstamos</div></div>
+    </div>
+    <div class="ebs">
+      <button class="btn-e bp" onclick="xPDFs('enseres')">PDF</button>
+      <button class="btn-e bw" onclick="xWA('enseres')">WA</button>
+    </div>
+  </div>
+
+  <!-- Chip tabs -->
+  <div class="chip-tabs">
+    <div class="chip active" onclick="filtrarEnseres('todos',this)">📦 Todos</div>
+    <div class="chip" onclick="filtrarEnseres('herramienta',this)">🔨 Herramientas</div>
+    <div class="chip" onclick="filtrarEnseres('mueble',this)">🪑 Muebles</div>
+    <div class="chip" onclick="filtrarEnseres('cocina',this)">🍳 Cocina</div>
+    <div class="chip" onclick="filtrarEnseres('ropa',this)">👗 Ropa</div>
+    <div class="chip" onclick="filtrarEnseres('zapatos',this)">👟 Zapatos</div>
+    <div class="chip" onclick="filtrarEnseres('limpieza',this)">🧹 Limpieza</div>
+    <div class="chip" onclick="filtrarEnseres('electronico',this)">📱 Electrónico</div>
+    <div class="chip" onclick="filtrarEnseres('prestado',this)" style="border-color:var(--amber);color:var(--amber)">📤 Prestados</div>
+  </div>
+
+  <!-- Agregar ítem al inventario -->
+  <div class="card">
+    <div class="card-title">📦 Agregar al inventario</div>
+    <div class="fg">
+      <div class="fr2">
+        <input id="en-nom" placeholder="Nombre del ítem (ej: Taladro, Camisa azul)"/>
+        <select id="en-cat">
+          <optgroup label="🔨 Herramientas">
+            <option>Martillo</option><option>Destornillador</option><option>Llave inglesa</option>
+            <option>Alicate / Pinza</option><option>Taladro</option><option>Sierra</option>
+            <option>Nivel</option><option>Metro / Cinta métrica</option><option>Llave allen</option>
+            <option>Esmeril</option><option>Escalera</option><option>Pala</option>
+            <option>Azadón</option><option>Manguera</option><option>Machete</option>
+            <option>Tijeras de poda</option>
+          </optgroup>
+          <optgroup label="🪑 Muebles y sillas">
+            <option>Silla plástica</option><option>Silla de madera</option>
+            <option>Silla plegable</option><option>Silla de playa</option>
+            <option>Mesa plástica</option><option>Mesa de madera</option>
+            <option>Sofá / Mueble</option><option>Cama</option><option>Colchón</option>
+            <option>Armario</option><option>Estante</option>
+          </optgroup>
+          <optgroup label="🍳 Cocina y menaje">
+            <option>Olla grande</option><option>Olla mediana</option><option>Olla pequeña</option>
+            <option>Sartén</option><option>Caldero</option><option>Tamal / Vaporera</option>
+            <option>Cuchillo de cocina</option><option>Tabla de cortar</option>
+            <option>Taza / Pocillo</option><option>Plato</option><option>Vaso</option>
+            <option>Tenedor</option><option>Cuchara grande</option><option>Cucharón</option>
+            <option>Espumadera</option><option>Colador</option><option>Rallador</option>
+            <option>Porta / Recipiente</option><option>Tupperware</option>
+            <option>Bandeja / Molde</option><option>Tostadora</option>
+            <option>Licuadora</option><option>Sanduchera</option>
+          </optgroup>
+          <optgroup label="👗 Ropa dama">
+            <option>Blusa dama</option><option>Pantalón dama</option>
+            <option>Vestido</option><option>Falda</option><option>Conjunto dama</option>
+            <option>Ropa interior dama</option><option>Pijama dama</option>
+            <option>Chaqueta dama</option><option>Ropa deportiva dama</option>
+          </optgroup>
+          <optgroup label="👕 Ropa caballero">
+            <option>Camisa caballero</option><option>Camiseta caballero</option>
+            <option>Pantalón caballero</option><option>Jean caballero</option>
+            <option>Ropa interior caballero</option><option>Pijama caballero</option>
+            <option>Chaqueta caballero</option><option>Ropa deportiva caballero</option>
+            <option>Traje formal</option>
+          </optgroup>
+          <optgroup label="👶 Ropa niños">
+            <option>Ropa niño</option><option>Ropa niña</option>
+            <option>Ropa bebé</option><option>Uniforme escolar</option>
+          </optgroup>
+          <optgroup label="👟 Calzado">
+            <option>Tenis / Sneakers</option><option>Zapatos de vestir</option>
+            <option>Sandalias</option><option>Botas</option>
+            <option>Zapatos niños</option><option>Chanclas</option>
+            <option>Zapatos deportivos</option>
+          </optgroup>
+          <optgroup label="🧹 Limpieza">
+            <option>Escoba</option><option>Trapero</option><option>Balde</option>
+            <option>Recogedor</option><option>Cepillo de baño</option>
+          </optgroup>
+          <optgroup label="📱 Electrónico">
+            <option>Televisor</option><option>Computador / Portátil</option>
+            <option>Tablet</option><option>Celular</option><option>Parlante</option>
+            <option>Extensión eléctrica</option><option>Cámara</option>
+            <option>Audífonos</option>
+          </optgroup>
+          <optgroup label="🏠 Otros">
+            <option>Abanico / Ventilador</option><option>Lámpara</option>
+            <option>Cobija / Sábana</option><option>Toalla</option>
+            <option>Sombrilla / Paraguas</option><option>Bolso / Maletín</option>
+            <option>Mochila</option><option>Otro</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="fr2">
+        <input id="en-cantidad" type="number" placeholder="Cantidad" min="1" value="1"/>
+        <input id="en-nota" placeholder="Descripción / marca / color"/>
+      </div>
+      <button class="badd" onclick="addEnser()">+ Agregar al inventario</button>
+    </div>
+  </div>
+
+  <!-- Registrar préstamo -->
+  <div class="card" style="border-left:3px solid var(--amber)">
+    <div class="card-title" style="color:var(--amber)">📤 Registrar Préstamo</div>
+    <div class="fg">
+      <div class="fr2">
+        <select id="prest-item" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius-sm);padding:10px;font-size:13px;width:100%;-webkit-appearance:none">
+          <option value="">— Selecciona ítem a prestar —</option>
+        </select>
+        <input id="prest-cant" type="number" placeholder="Cantidad" min="1" value="1"/>
+      </div>
+      <div class="fr2">
+        <select id="prest-relacion" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius-sm);padding:10px;font-size:13px;width:100%;-webkit-appearance:none">
+          <option>— Relación —</option>
+          <option>Mamá</option><option>Papá</option>
+          <option>Hermano</option><option>Hermana</option>
+          <option>Primo / Prima</option><option>Tío / Tía</option>
+          <option>Abuelo / Abuela</option><option>Sobrino / Sobrina</option>
+          <option>Esposo / Esposa</option><option>Hijo / Hija</option>
+          <option>Vecino</option><option>Amigo / Amiga</option>
+          <option>Compañero de trabajo</option><option>Particular</option>
+          <option>Otro familiar</option>
+        </select>
+        <input id="prest-nombre" placeholder="Nombre de la persona"/>
+      </div>
+      <div class="fr2">
+        <input id="prest-fecha" type="date"/>
+        <input id="prest-nota" placeholder="Nota / para qué lo necesita"/>
+      </div>
+      <button class="badd" style="background:linear-gradient(90deg,#B45309,#F59E0B);color:#000" onclick="addPrestamo()">📤 Registrar préstamo</button>
+    </div>
+  </div>
+
+  <!-- Inventario -->
+  <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px">📦 Inventario</div>
+  <div id="enseres-grid" class="enser-grid"></div>
+
+  <!-- Préstamos activos -->
+  <div style="font-size:13px;font-weight:700;color:var(--amber);margin-bottom:8px;margin-top:14px">
+    📤 Préstamos activos <span id="prest-count" style="font-size:11px;font-weight:400;color:var(--muted)"></span>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Ítem</th><th>Cant.</th><th>A quién</th><th>Relación</th><th>Fecha</th><th>Nota</th><th>Estado</th><th></th></tr></thead>
+      <tbody id="prestamos-tabla"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== FNA ===== -->
+<div class="sec" id="sec-fna">
+  <div class="sh">
+    <div class="st">🏦 FNA — Fondo Nacional del Ahorro</div>
+    <div class="ebs">
+      <button class="btn bp" onclick="xPDFs('fna')">PDF</button>
+      <button class="btn bw" onclick="xWA('fna')">WA</button>
+    </div>
+  </div>
+
+  <!-- Resumen FNA -->
+  <div class="sumgrid" style="margin-bottom:10px">
+    <div class="sumcard"><div class="sumlbl">Saldo Crédito</div><div class="sumval" style="color:var(--red)" id="fna-saldo">$0</div></div>
+    <div class="sumcard"><div class="sumlbl">Total Pagado</div><div class="sumval" style="color:var(--green)" id="fna-pagado">$0</div></div>
+    <div class="sumcard"><div class="sumlbl">Cuota Mensual</div><div class="sumval" style="color:var(--accent)" id="fna-cuota-disp">$0</div></div>
+    <div class="sumcard"><div class="sumlbl">Próx. Vencimiento</div><div class="sumval" style="color:var(--amber);font-size:13px" id="fna-prox">—</div></div>
+  </div>
+
+  <!-- Configurar crédito FNA -->
+  <div class="card" style="margin-bottom:10px">
+    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:9px">⚙️ Configurar Crédito FNA</div>
+    <div class="fg">
+      <div class="fr2">
+        <input id="fna-nom" placeholder="Nombre del titular"/>
+        <input id="fna-num" placeholder="N° crédito / afiliación"/>
+      </div>
+      <div class="fr2">
+        <input id="fna-total" type="number" placeholder="Valor total crédito $"/>
+        <input id="fna-cuota" type="number" placeholder="Cuota mensual $"/>
+      </div>
+      <div class="fr2">
+        <input id="fna-inicio" type="date" placeholder="Fecha inicio"/>
+        <input id="fna-vcto-dia" type="number" placeholder="Día de pago (ej: 5)" min="1" max="31"/>
+      </div>
+      <div class="fr2">
+        <input id="fna-tasa" type="number" placeholder="Tasa interés % EA" step="0.01"/>
+        <input id="fna-plazo" type="number" placeholder="Plazo (meses)"/>
+      </div>
+      <textarea id="fna-nota-cred" placeholder="Observaciones del crédito..." style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 10px;font-size:13px;width:100%;resize:none;min-height:44px;font-family:inherit"></textarea>
+      <button class="badd" onclick="guardarCreditoFNA()" style="background:var(--purple)">💾 Guardar configuración del crédito</button>
+    </div>
+  </div>
+
+  <!-- Calendario de pagos -->
+  <div class="card" style="margin-bottom:10px">
+    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:9px">📅 Calendario de Pagos FNA</div>
+    <!-- Mini calendario -->
+    <div id="fna-cal-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <button onclick="fnaCalMes(-1)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:14px">‹</button>
+      <span id="fna-cal-titulo" style="font-size:13px;font-weight:700;color:var(--text)">—</span>
+      <button onclick="fnaCalMes(1)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:14px">›</button>
+    </div>
+    <div id="fna-cal" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;font-size:11px"></div>
+    <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;font-size:10px">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(52,201,143,.3);margin-right:3px"></span>Pagado</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(240,82,82,.3);margin-right:3px"></span>Pendiente</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(245,166,35,.3);margin-right:3px"></span>Vence hoy</span>
+    </div>
+  </div>
+
+  <!-- Registrar pago -->
+  <div class="card" style="margin-bottom:10px">
+    <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:9px">✅ Registrar Pago</div>
+    <div class="fg">
+      <div class="fr2">
+        <input id="fna-p-fecha" type="date"/>
+        <input id="fna-p-monto" type="number" placeholder="Monto pagado $"/>
+      </div>
+      <div class="fr2">
+        <select id="fna-p-tipo" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 10px;font-size:13px;width:100%">
+          <option>Cuota mensual</option>
+          <option>Abono a capital</option>
+          <option>Pago intereses</option>
+          <option>Pago seguro</option>
+          <option>Cuota extraordinaria</option>
+        </select>
+        <input id="fna-p-ref" placeholder="N° comprobante / ref."/>
+      </div>
+      <input id="fna-p-nota" placeholder="Nota del pago"/>
+      <button class="badd" onclick="registrarPagoFNA()" style="background:var(--green)">✅ Registrar pago FNA</button>
+    </div>
+  </div>
+
+  <!-- Historial de pagos -->
+  <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:7px">📋 Historial de pagos</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Fecha</th><th>Monto</th><th>Tipo</th><th>Referencia</th><th>Nota</th><th></th></tr></thead>
+      <tbody id="fna-hist"></tbody>
+    </table>
+  </div>
+  <div class="tot-row" style="color:var(--green);margin-top:6px">Total pagado: <span id="fna-hist-tot">$0</span></div>
+</div>
+
+
+  
+<!-- ===== PRECIOS DEL MERCADO ===== -->
+<div class="sec" id="sec-precios">
+  <div class="sh">
+    <div class="sh-left">
+      <div class="sh-ico" style="background:rgba(245,158,11,.2)">🏷️</div>
+      <div>
+        <div class="sh-title">Precios del Mercado</div>
+        <div class="sh-sub">Historial · Comparador · Registro</div>
+      </div>
+    </div>
+    <div class="ebs">
+      <button class="btn-e bp" onclick="xPDFPrecios()">📄 PDF</button>
+      <button class="btn-e bw" onclick="xWAPrecios()">WA</button>
+    </div>
+  </div>
+
+  <!-- TABS internos -->
+  <div class="chip-tabs" style="margin-bottom:14px">
+    <div class="chip active" id="ptab-registrar" onclick="switchPreciosTab('registrar',this)">📝 Registrar precio</div>
+    <div class="chip" id="ptab-comparar"  onclick="switchPreciosTab('comparar',this)">⚖️ Comparador</div>
+    <div class="chip" id="ptab-historial" onclick="switchPreciosTab('historial',this)">📊 Historial</div>
+  </div>
+
+  <!-- ── TAB: REGISTRAR ── -->
+  <div id="precios-tab-registrar">
+    <!-- Scanner IA para precios -->
+    <div class="scanbox" onclick="abrirScannerPrecios()" style="margin-bottom:10px">
+      <div style="font-size:22px;margin-bottom:3px">🤖</div>
+      <div style="font-size:12px;color:var(--muted)">Escáner IA — fotografía la etiqueta de precio o góndola</div>
+      <input type="file" id="scan-precios" accept="image/*" capture="environment" style="display:none" onchange="scannerPrecios(this)"/>
+    </div>
+    <div id="scan-precios-res" style="display:none;background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px"></div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-title">📝 Registrar precio observado en tienda</div>
+      <div class="fg">
+        <div class="fr2">
+          <!-- Buscador en select de productos -->
+          <div style="position:relative">
+            <input id="pr-buscar" type="text" placeholder="🔍 Buscar producto..."
+              style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius-sm);padding:9px 12px;font-size:13px;width:100%;margin-bottom:6px"
+              oninput="filtrarSelectPrecios(this.value)"/>
+          </div>
+          <select id="pr-producto" onchange="autoFillPrecioFromHistory()">
+            <optgroup label="🥩 Carnes"><option>Res - Posta</option><option>Res - Costilla</option><option>Res - Molida</option><option>Pollo - Pechuga</option><option>Pollo - Muslo</option><option>Pollo - Entero</option><option>Cerdo - Chuleta</option><option>Cerdo - Pernil</option></optgroup>
+            <optgroup label="🥛 Lácteos"><option>Leche entera (lt)</option><option>Leche en polvo</option><option>Queso costeño (kg)</option><option>Queso mozzarella</option><option>Mantequilla</option><option>Yogur natural</option><option>Huevo (und)</option><option>Huevo (cubeta 30)</option></optgroup>
+            <optgroup label="🥦 Verduras"><option>Tomate chonto (kg)</option><option>Cebolla cabezona (kg)</option><option>Papa pastusa (kg)</option><option>Papa criolla (kg)</option><option>Zanahoria (kg)</option><option>Yuca (kg)</option><option>Plátano verde (kg)</option><option>Plátano maduro (kg)</option><option>Ajo (cabeza)</option><option>Cilantro (manojo)</option></optgroup>
+            <optgroup label="🍎 Frutas"><option>Banano (kg)</option><option>Naranja (kg)</option><option>Mango tommy (kg)</option><option>Aguacate (und)</option><option>Limón tahití (kg)</option><option>Papaya (kg)</option></optgroup>
+            <optgroup label="🌾 Granos y Despensa"><option>Arroz (kg)</option><option>Arroz (5kg)</option><option>Fríjol rojo (kg)</option><option>Lenteja (kg)</option><option>Aceite vegetal (lt)</option><option>Aceite de oliva</option><option>Azúcar (kg)</option><option>Sal (kg)</option><option>Panela (und)</option><option>Pasta fideo</option><option>Pasta espagueti</option></optgroup>
+            <optgroup label="🧹 Aseo"><option>Jabón lavaplatos</option><option>Detergente en polvo</option><option>Jabón líquido de ropa</option><option>Cápsulas de ropa</option><option>Perlas aromatizantes</option><option>Jabón azul (barra)</option><option>Jabón de coco</option><option>Blanqueador</option><option>Desinfectante</option><option>Papel higiénico (und)</option></optgroup>
+            <optgroup label="🌸 Aromatizantes"><option>Ambientador spray</option><option>Ambientador lencería</option><option>Velas aromáticas</option><option>Sachet aromatizante</option></optgroup>
+            <optgroup label="🔋 Accesorios"><option>Pilas AA (par)</option><option>Pilas AAA (par)</option><option>Bombillo LED</option></optgroup>
+            <optgroup label="🧴 Higiene"><option>Jabón de baño</option><option>Shampoo</option><option>Crema dental</option><option>Desodorante</option><option>Pañales (paquete)</option></optgroup>
+          </select>
+          <input id="pr-nombre-libre" placeholder="O escribe el producto..."/>
+        </div>
+        <div class="fr2">
+          <select id="pr-tienda" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius-sm);padding:10px;font-size:13px;width:100%;-webkit-appearance:none">
+            <option>Plaza de Mercado</option><option>Éxito</option><option>Olímpica</option>
+            <option>Mi Futuro</option><option>D1</option><option>Ara</option>
+            <option>Don Campo</option><option>Jumbo</option><option>Alkosto</option>
+            <option>Carulla</option><option>Surtimax</option><option>Tienda de barrio</option>
+          </select>
+          <input id="pr-fecha" type="date"/>
+        </div>
+        <div class="fr2">
+          <input id="pr-precio" type="number" placeholder="Precio observado $"/>
+          <input id="pr-unidad" placeholder="Por (kg, lt, und, paq...)"/>
+        </div>
+        <input id="pr-nota" placeholder="Nota (oferta, descuento, ref. exacta...)"/>
+        <button class="badd" style="background:linear-gradient(90deg,#D97706,#F59E0B);color:#000" onclick="registrarPrecio()">💾 Registrar precio</button>
+      </div>
+    </div>
+    <!-- Últimos registros -->
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Últimos precios registrados</div>
+    <div id="precios-recientes"></div>
+  </div>
+
+  <!-- ── TAB: COMPARADOR ── -->
+  <div id="precios-tab-comparar" style="display:none">
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-title">⚖️ Comparar precios por producto</div>
+
+      <div class="fg">
+        <input id="comp-buscar" placeholder="🔍 Buscar producto (ej: arroz, jabón...)" oninput="buscarProductoComparar(this.value)"/>
+      </div>
+    </div>
+    <div id="comparador-resultado"></div>
+  </div>
+
+  <!-- ── TAB: HISTORIAL ── -->
+  <div id="precios-tab-historial" style="display:none">
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-title">📊 Historial completo de precios</div>
+      <div class="fg">
+        <div class="fr2">
+          <select id="hist-tienda-fil" onchange="renderHistorialPrecios()" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:var(--radius-sm);padding:10px;font-size:13px;width:100%;-webkit-appearance:none">
+            <option value="">Todas las tiendas</option>
+            <option>Plaza de Mercado</option><option>Éxito</option><option>Olímpica</option>
+            <option>Mi Futuro</option><option>D1</option><option>Ara</option>
+            <option>Don Campo</option><option>Jumbo</option><option>Alkosto</option>
+            <option>Carulla</option><option>Surtimax</option><option>Tienda de barrio</option>
+          </select>
+          <input id="hist-prod-fil" placeholder="Filtrar producto..." oninput="renderHistorialPrecios()"/>
+        </div>
+      </div>
+    </div>
+    <div id="historial-precios-tabla"></div>
+    <div id="chart-precios" class="cw" style="display:none;margin-top:12px">
+      <div class="ct" id="chart-precios-titulo">Evolución de precios</div>
+      <div id="chart-precios-bars"></div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+</div>
+  </div>
+</div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
