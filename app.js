@@ -2373,16 +2373,12 @@ function nav(sec,el){
 }
 
 function toggleDrawer(){
-  const sb=document.getElementById('sidebar');
-  const ov=document.getElementById('overlay');
-  if(sb) sb.classList.toggle('open');
-  if(ov) ov.classList.toggle('open');
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
 }
 function closeDrawer(){
-  const sb=document.getElementById('sidebar');
-  const ov=document.getElementById('overlay');
-  if(sb) sb.classList.remove('open');
-  if(ov) ov.classList.remove('open');
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
 }
 
 function cambiarMes(){} // handled by listener in startApp

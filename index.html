@@ -59,7 +59,7 @@ body{
   overflow:hidden;
   border-right:1px solid var(--border);
   transition:transform .25s ease;
-  z-index:300;
+  z-index:200;
 }
 .sidebar-header{
   background:linear-gradient(160deg,var(--p4) 0%,var(--p2) 100%);
@@ -134,14 +134,13 @@ body{
   padding:0 14px;
   flex-shrink:0;
   box-shadow:0 2px 8px rgba(0,0,0,.4);
-  z-index:50;
+  z-index:100;
 }
 .menu-btn{
   width:40px;height:40px;border-radius:50%;border:none;
   background:rgba(255,255,255,.1);color:#fff;
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;flex-shrink:0;font-size:20px;
-  position:relative;z-index:400;
 }
 #topbar-title{
   flex:1;font-size:15px;font-weight:700;color:#fff;
@@ -179,7 +178,7 @@ body{
     position:fixed;
     top:0;left:0;bottom:0;
     transform:translateX(calc(-1 * var(--drawer)));
-    z-index:300;
+    z-index:200;
   }
   #sidebar.open{
     transform:translateX(0);
@@ -190,7 +189,7 @@ body{
 }
 
 /* ─── OVERLAY (mobile) ─── */
-#overlay{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:290;pointer-events:none;transition:background .3s}
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:90;pointer-events:none;transition:background .3s}
 #overlay.open{background:rgba(0,0,0,.65);pointer-events:all}
 
 /* ─── MAIN AREA ─── */

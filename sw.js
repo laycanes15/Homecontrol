@@ -1,4 +1,4 @@
-const VERSION = 'gh-v1777011436';
+const VERSION = 'gh-v1776200609';
 const CACHE_STATIC = VERSION + '-static';
 const CACHE_CDN    = VERSION + '-cdn';
 
